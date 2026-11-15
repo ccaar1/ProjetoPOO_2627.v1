@@ -6,13 +6,12 @@ import pt.iscte.poo.utils.Point2D;
 
 import java.util.Random;
 
-public class Baba implements ImageTile {
+public class Baba extends ImageTile {
 
-    private Point2D position;
     private String direction = "r";
 
     public Baba(Point2D position) {
-        this.position = position;
+        super(position);
     }
 
     @Override
@@ -21,17 +20,17 @@ public class Baba implements ImageTile {
     }
 
     @Override
-    public Point2D getPosition() {
-        return position;
-    }
-
-    @Override
     public int getLayer() {
-        return 25;
+        return 1;
     }
 
-    public void move(Direction d) {
-        Random rand = new Random();
-        position = new Point2D(rand.nextInt(10), rand.nextInt(10));
+    public void move(Direction d) { //inicialmente estava como random mas nao queremos isso, queremos que seja o jogador a controlar a personagem
+        super.setPosition(super.getPosition().plus(d.asVector()));
+        direction = d.toString().toLowerCase().substring(0, 1); //pega na primeira letra da direção e converte para minuscula
+
     }
 }
+
+//GameObject
+//Word
+//WordIs

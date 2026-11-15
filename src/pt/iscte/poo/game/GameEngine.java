@@ -19,7 +19,7 @@ public class GameEngine implements Observer {
 
     private GameEngine() {
         currentRoom = Room.readRoom(new File(ROOMS_DIRECTORY + "/room0.txt"));
-        updateGUI();
+        updateGUI(); //atualizar GUI e importante
     }
 
 	public static GameEngine getInstance() {
@@ -27,14 +27,14 @@ public class GameEngine implements Observer {
 	}
 
     @Override
-    public void update(Observed source) {
+    public void update(Observed source) { //le as teclas e processa os ticks
 
         if (ImageGUI.getInstance().wasKeyPressed()) {
             int k = ImageGUI.getInstance().keyPressed();
 
             if (k == KeyEvent.VK_LEFT || k == KeyEvent.VK_RIGHT || k == KeyEvent.VK_UP || k == KeyEvent.VK_DOWN) {
-                Direction d = Direction.directionFor(k);
-                getPlayer().move(d);
+                Direction d = Direction.directionFor(k); 
+                getPlayer().move(d); //o move vamos ter de implementar
                 updateGUI();
             }
         }
