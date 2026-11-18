@@ -35,10 +35,14 @@ public class Room {
         return objects;
     }
 
-    public static Room readRoom(File f) {
+    public static Room readRoom(File f) { //o started body cria uma sala mas queremos que leia o ficheiro e crie a sala com base no que está no ficheiro
         Room r = new Room();
         r.setName(f.getName());
 
+        //try(Scanner scanner = new Scanner(f){
+
+
+        //})
         for (int i = 0; i <= 10; i++) {
             ImageTile dirt = new Dirt(new Point2D(i, i));
             r.addObject(dirt);

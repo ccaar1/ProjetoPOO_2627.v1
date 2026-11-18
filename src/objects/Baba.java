@@ -10,6 +10,10 @@ public class Baba extends GameObject {
 
     private String direction = "r";
 
+    public Baba(Point2D position) {
+        super(position);
+    }
+
     @Override
     public String getName() {
         return "baba-" + direction;
