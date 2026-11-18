@@ -6,8 +6,12 @@ public abstract class GameObject implements ImageTile {
 
     private Point2D position;
 
-
     public GameObject(Point2D position) {
+        
+        this.position = position;
+    }
+
+    public void setPosition(Point2D position) {
 
         this.position = position;
     }

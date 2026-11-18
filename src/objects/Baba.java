@@ -6,13 +6,9 @@ import pt.iscte.poo.utils.Point2D;
 
 import java.util.Random;
 
-public class Baba extends ImageTile {
+public class Baba extends GameObject {
 
     private String direction = "r";
-
-    public Baba(Point2D position) {
-        super(position);
-    }
 
     @Override
     public String getName() {
