@@ -8,6 +8,7 @@ import pt.iscte.poo.gui.ImageGUI;
 import pt.iscte.poo.observer.Observed;
 import pt.iscte.poo.observer.Observer;
 import pt.iscte.poo.utils.Direction;
+import pt.iscte.poo.utils.Point2D;
 
 public class GameEngine implements Observer {
 
@@ -34,7 +35,12 @@ public class GameEngine implements Observer {
 
             if (k == KeyEvent.VK_LEFT || k == KeyEvent.VK_RIGHT || k == KeyEvent.VK_UP || k == KeyEvent.VK_DOWN) {
                 Direction d = Direction.directionFor(k); 
-                getPlayer().move(d); //o move vamos ter de implementar
+                Point2D nextPosition = getPlayer().getPosition().plus(d.asVector());
+
+                if (!currentRoom.isWall(nextPosition)) {
+                        getPlayer().move(d);
+                } 
+
                 updateGUI();
             }
         }

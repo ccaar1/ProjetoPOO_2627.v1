@@ -57,16 +57,16 @@ public class Room {
 
                 for (int x = 0; x < cols; x++) { //percorre as colunas da linha
                     char element = linha.charAt(x);
-                    Point2D posicao = new Point2D(x, y);
+                    Point2D position = new Point2D(x, y);
 
-                    r.addObject(new Dirt(posicao));
+                    r.addObject(new Dirt(position));
 
                     
-                    if (element == 'X') {
-                        r.addObject(new Wall(posicao));
+                    if (element == 'X') { //identifica elementos no map
+                        r.addObject(new Wall(position));
                     }
                     else if (element == 'x') {
-                        r.addObject(new CrackedWall(posicao));
+                        r.addObject(new CrackedWall(position));
                     }
                 }
             } 
@@ -86,10 +86,10 @@ public class Room {
                 int x = Integer.parseInt(dados[1]);
                 int y = Integer.parseInt(dados[2]);
 
-                Point2D posicao = new Point2D(x, y);
+                Point2D position = new Point2D(x, y);
 
                 if (nome.equals("baba")) {
-                    Baba baba = new Baba(posicao);
+                    Baba baba = new Baba(position);
                     r.addObject(baba);
                     r.player = baba;
                 }
@@ -104,6 +104,17 @@ public class Room {
         return r;
     }
 
+
+    public boolean isWall(Point2D position) { //preferencialmente teriamos uma interface bloackable e classes abstratas
+        for(ImageTile obj : objects){
+            if (obj instanceof Wall && obj.getPosition().equals(position)) {
+                return true;
+            }
+            
+        }
+        return false;
+
+    }
     public Baba getPlayer() {
         return player;
     }
