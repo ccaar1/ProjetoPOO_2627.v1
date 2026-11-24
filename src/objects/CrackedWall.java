@@ -6,7 +6,7 @@ import pt.iscte.poo.utils.Point2D;
 public class CrackedWall extends GameObject {
     
     public CrackedWall(Point2D position) {
-        super(position);
+        super(position, 10);
     }
 
     @Override

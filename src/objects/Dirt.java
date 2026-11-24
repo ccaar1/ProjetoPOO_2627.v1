@@ -6,7 +6,7 @@ import pt.iscte.poo.utils.Point2D;
 public class Dirt extends GameObject { 
 
     public Dirt(Point2D position) {
-        super(position);
+        super(position, 5);
     }
 
     @Override

@@ -6,7 +6,7 @@ import pt.iscte.poo.utils.Point2D;
 public class Wall extends GameObject {
 
     public Wall(Point2D position) {
-        super(position);
+        super(position, 10);
     }
 
     @Override

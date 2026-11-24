@@ -4,14 +4,12 @@ import pt.iscte.poo.gui.ImageTile;
 import pt.iscte.poo.utils.Direction;
 import pt.iscte.poo.utils.Point2D;
 
-import java.util.Random;
-
 public class Baba extends GameObject {
 
     private String direction = "r";
 
     public Baba(Point2D position) {
-        super(position);
+        super(position, 25);
     }
 
     @Override

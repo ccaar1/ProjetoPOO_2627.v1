@@ -3,15 +3,16 @@ package pt.iscte.poo.game;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
-import objects.Baba;
-import objects.CrackedWall;
-import objects.Dirt;
-import objects.Wall;
+import objects.*;
+
 import pt.iscte.poo.gui.ImageTile;
-import pt.iscte.poo.utils.Point2D;
+import pt.iscte.poo.utils.*;
 
 public class Room {
 
@@ -19,60 +20,137 @@ public class Room {
     private String roomName;
     private Baba player;
 
+    private int cols;
+    private int rows;
+    private int moves;
+
+    private EnumSet<BoxProperty> properties =
+        EnumSet.noneOf(BoxProperty.class);
+
+    /** Creates an empty room. */
     public Room() {
         objects = new ArrayList<>();
     }
 
+    /** Defines the source file name. */
     private void setName(String name) {
         roomName = name;
     }
 
+    /** Returns the source file name. */
     public String getName() {
         return roomName;
     }
 
+    /** Adds an element to the room. */
     public void addObject(ImageTile obj) {
         objects.add(obj);
     }
 
+    /** Returns the elements used by the GUI. */
     public List<ImageTile> getObjects() {
-        return objects;
+        return List.copyOf(objects);
     }
 
-    public static Room readRoom(File f) { //o starter body cria uma sala mas queremos que leia o ficheiro e crie a sala com base no que está no ficheiro
+    /** Returns the player. */
+    public Baba getPlayer() {
+        return player;
+    }
+
+    /** Returns successful player movements in this attempt. */
+    public int getMoves() {
+        return moves;
+    }
+
+    /** Checks whether a position belongs to the map. */
+    public boolean isInside(Point2D position) {
+        int x = position.getX();
+        int y = position.getY();
+
+        return x >= 0 && x < cols && y >= 0 && y < rows;
+    }
+
+    /** Returns every element at a position, including the floor. */
+    public List<ImageTile> getObjectsAt(Point2D position) {
+        List<ImageTile> result = new ArrayList<>();
+
+        for (ImageTile object : objects) {
+            if (object.getPosition().equals(position)) {
+                result.add(object);
+            }
+        }
+
+        return result;
+    }
+
+    /** Checks whether a wall occupies a position. */
+    public boolean isWall(Point2D position) {
+        for (ImageTile object : getObjectsAt(position)) {
+            if (object instanceof Wall) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** Reads the map and the implemented object entries. */
+    public static Room readRoom(File f) {
         Room r = new Room();
         r.setName(f.getName());
 
         try (Scanner scanner = new Scanner(f)) {
+            if (!scanner.hasNextLine()) {
+                throw new IllegalArgumentException("Empty room file.");
+            }
 
-            String dimensions = scanner.nextLine(); //dimensoes do nivel
-            String[] values = dimensions.split(","); //separa as dimensoes em colunas e linhas
+            String dimensions = scanner.nextLine();
+            String[] values = dimensions.split(",", -1);
 
-            int cols = Integer.parseInt(values[0]); //primeiro valor de (a, b) string para int 
-            int rows = Integer.parseInt(values[1]); //segundo valor de (a, b) string para int
+            if (values.length != 2) {
+                throw new IllegalArgumentException(
+                    "Expected dimensions: cols,rows"
+                );
+            }
 
-        
-            for (int y = 0; y < rows; y++) { //percorre as n linhas declaradas nas dimensoesdo ficheiro, transformando cada caracter em um objeto correspondente na sala
+            r.cols = Integer.parseInt(values[0].trim());
+            r.rows = Integer.parseInt(values[1].trim());
+
+            if (r.cols <= 0 || r.rows <= 0) {
+                throw new IllegalArgumentException(
+                    "Room dimensions must be positive."
+                );
+            }
+
+            for (int y = 0; y < r.rows; y++) {
+                if (!scanner.hasNextLine()) {
+                    throw new IllegalArgumentException(
+                        "Missing map row: " + y
+                    );
+                }
+
                 String linha = scanner.nextLine();
 
-                for (int x = 0; x < cols; x++) { //percorre as colunas da linha
+                if (linha.length() != r.cols) {
+                    throw new IllegalArgumentException(
+                        "Invalid map width at row " + y
+                    );
+                }
+
+                for (int x = 0; x < r.cols; x++) {
                     char element = linha.charAt(x);
                     Point2D position = new Point2D(x, y);
 
                     r.addObject(new Dirt(position));
 
-                    
-                    if (element == 'X') { //identifica elementos no map
+                    if (element == 'X') {
                         r.addObject(new Wall(position));
-                    }
-                    else if (element == 'x') {
+                    } else if (element == 'x') {
                         r.addObject(new CrackedWall(position));
                     }
                 }
-            } 
+            }
 
-            //depois de ler o mapa, le o resto do ficheiro onde sao dadas coordernadas de objetos. 
-            //aqui tbm lemos os restantes objetos ainda nao implementados. bomb, flag etc
             while (scanner.hasNextLine()) {
                 String linha = scanner.nextLine();
 
@@ -80,42 +158,264 @@ public class Room {
                     continue;
                 }
 
-                String[] dados = linha.split(",");
+                String[] dados = linha.split(",", -1);
 
-                String nome = dados[0];
-                int x = Integer.parseInt(dados[1]);
-                int y = Integer.parseInt(dados[2]);
+                if (dados.length < 3) {
+                    throw new IllegalArgumentException(
+                        "Invalid object entry: " + linha
+                    );
+                }
+
+                String nome = dados[0].trim();
+                int x = Integer.parseInt(dados[1].trim());
+                int y = Integer.parseInt(dados[2].trim());
 
                 Point2D position = new Point2D(x, y);
 
-                if (nome.equals("baba")) {
-                    Baba baba = new Baba(position);
-                    r.addObject(baba);
-                    r.player = baba;
+                if (!r.isInside(position)) {
+                    throw new IllegalArgumentException(
+                        "Object outside the map: " + linha
+                    );
                 }
 
-                //usamos o mesmo padrao para os restantes objetos
+                if (nome.equals("baba")) {
+                    if (r.player != null || dados.length > 4) {
+                        throw new IllegalArgumentException(
+                            "Invalid or duplicate Baba: " + linha
+                        );
+                    }
+
+                    String direction = "r";
+
+                    if (dados.length == 4 && !dados[3].isBlank()) {
+                        direction = dados[3].trim();
+                    }
+
+                    if (!direction.matches("[urdl]")) {
+                        throw new IllegalArgumentException(
+                            "Invalid Baba direction: " + linha
+                        );
+                    }
+
+                    if (r.isWall(position)) {
+                        throw new IllegalArgumentException(
+                            "Baba starts inside a wall."
+                        );
+                    }
+
+                    r.player = new Baba(position);
+                    r.addObject(r.player);
+
+                } else {
+                    if (dados.length != 3) {
+                        throw new IllegalArgumentException(
+                            "Expected name,x,y: " + linha
+                        );
+                    }
+
+                    switch (nome) {
+                        case "rock":
+                            r.addObject(new Rock(position));
+                            break;
+
+                        case "box":
+                            r.addObject(new Box(position));
+                            break;
+
+                        case "flag":
+                            r.addObject(new Flag(position));
+                            break;
+
+                        case "wordBox":
+                            r.addObject(new WordTile(position, WordType.BOX));
+                            break;
+
+                        case "wordIs":
+                            r.addObject(new WordTile(position, WordType.IS));
+                            break;
+
+                        case "wordWin":
+                            r.addObject(new WordTile(position, WordType.WIN));
+                            break;
+
+                        case "wordMove":
+                            r.addObject(new WordTile(position, WordType.MOVE));
+                            break;
+
+                        case "wordStop":
+                            r.addObject(new WordTile(position, WordType.STOP));
+                            break;
+
+                        case "bomb":
+                            // Implemented in the next development stage.
+                            break;
+
+                        default:
+                            throw new IllegalArgumentException(
+                                "Unknown object: " + nome
+                            );
+                    }
+                }
             }
 
         } catch (FileNotFoundException e) {
-        System.err.println("Room file not found: " + f.getPath());
+            throw new IllegalStateException(
+                "Room file not found: " + f.getPath(), e
+            );
         }
 
+        if (r.player == null) {
+            throw new IllegalArgumentException(
+                "Missing Baba in " + f.getName()
+            );
+        }
+
+        r.evaluateRules();
         return r;
     }
 
+    /** Checks a currently active box property. */
+    public boolean hasProperty(BoxProperty property) {
+        return properties.contains(property);
+    }
 
-    public boolean isWall(Point2D position) { //preferencialmente teriamos uma interface bloackable e classes abstratas
-        for(ImageTile obj : objects){
-            if (obj instanceof Wall && obj.getPosition().equals(position)) {
+    /** Rebuilds the properties from the current word positions. */
+    public void evaluateRules() {
+        properties.clear();
+
+        for (ImageTile object : objects) {
+            if (object instanceof WordTile word
+                    && word.getType() == WordType.BOX) {
+
+                evaluateSentence(word.getPosition(), Direction.RIGHT);
+                evaluateSentence(word.getPosition(), Direction.DOWN);
+            }
+        }
+    }
+
+    /** Reads a possible BOX IS property sentence in one direction. */
+    private void evaluateSentence(Point2D start, Direction direction) {
+        Point2D middle = start.plus(direction.asVector());
+        Point2D end = middle.plus(direction.asVector());
+
+        if (!hasWordAt(middle, WordType.IS)) {
+            return;
+        }
+
+        if (hasWordAt(end, WordType.WIN)) {
+            properties.add(BoxProperty.WIN);
+        }
+
+        if (hasWordAt(end, WordType.MOVE)) {
+            properties.add(BoxProperty.MOVE);
+        }
+
+        if (hasWordAt(end, WordType.STOP)) {
+            properties.add(BoxProperty.STOP);
+        }
+    }
+
+    /** Checks for a specific word at a position. */
+    private boolean hasWordAt(Point2D position, WordType type) {
+        for (ImageTile object : getObjectsAt(position)) {
+            if (object instanceof WordTile word
+                    && word.getType() == type) {
                 return true;
             }
-            
         }
-        return false;
 
+        return false;
     }
-    public Baba getPlayer() {
-        return player;
+
+    /** Checks the property combinations that require a restart. */
+    public boolean hasRuleConflict() {
+        return hasProperty(BoxProperty.MOVE)
+            && (hasProperty(BoxProperty.STOP)
+                || hasProperty(BoxProperty.WIN));
+    }
+
+    /** Tries a player movement and a possible chain of pushes. */
+    public boolean tryMove(Direction direction) {
+        Point2D destination =
+            player.getPosition().plus(direction.asVector());
+
+        Set<Pushable> plan = new LinkedHashSet<>();
+
+        if (!planEntry(destination, direction, true, false, plan)) {
+            return false;
+        }
+
+        for (Pushable object : plan) {
+            Point2D next = object.getPosition().plus(direction.asVector());
+
+            object.setPosition(next);
+        }
+
+        player.move(direction);
+        moves++;
+        evaluateRules();
+
+        return true;
+    }
+
+    /** Validates the whole chain before any position is changed. */
+    private boolean planEntry(
+            Point2D destination,
+            Direction direction,
+            boolean direct,
+            boolean previousWasWord,
+            Set<Pushable> plan) {
+
+        if (!isInside(destination) || isWall(destination)) {
+            return false;
+        }
+
+        for (ImageTile object : getObjectsAt(destination)) {
+            if (object instanceof Pushable pushable
+                    && pushable.canBePushed(this, direct)) {
+
+                if (previousWasWord && object instanceof WordTile) {
+                    return false;
+                }
+
+                Point2D next =
+                    destination.plus(direction.asVector());
+
+                boolean possible = planEntry(
+                    next,
+                    direction,
+                    false,
+                    object instanceof WordTile,
+                    plan
+                );
+
+                if (!possible) {
+                    return false;
+                }
+
+                plan.add(pushable);
+
+            } else if (object instanceof Box
+                    && hasProperty(BoxProperty.STOP)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /** Checks the default objective and the BOX IS WIN objective. */
+    public boolean isWon() {
+        for (ImageTile object : getObjectsAt(player.getPosition())) {
+            if (object instanceof Flag) {
+                return true;
+            }
+
+            if (object instanceof Box && hasProperty(BoxProperty.WIN)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
