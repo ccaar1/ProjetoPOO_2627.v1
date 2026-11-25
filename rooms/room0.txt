@@ -22,3 +22,4 @@ flag,18,12
 wordBox,2,10
 wordIs,3,10
 wordMove,4,8
+wordWin,6,8

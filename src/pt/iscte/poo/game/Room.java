@@ -136,6 +136,7 @@ public class Room {
                     );
                 }
 
+                //desenha grass, wall, etcc
                 for (int x = 0; x < r.cols; x++) {
                     char element = linha.charAt(x);
                     Point2D position = new Point2D(x, y);
@@ -277,7 +278,7 @@ public class Room {
         return r;
     }
 
-    /** Checks a currently active box property. */
+    //verifica propriedades ativas da caixa
     public boolean hasProperty(BoxProperty property) {
         return properties.contains(property);
     }
