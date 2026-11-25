@@ -1,5 +1,5 @@
 package pt.iscte.poo.gui;
-
+//em princípio não é preciso mexer
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;

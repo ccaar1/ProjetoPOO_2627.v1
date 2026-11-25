@@ -2,7 +2,7 @@ package pt.iscte.poo.gui;
 
 import pt.iscte.poo.utils.Direction;
 import pt.iscte.poo.utils.Point2D;
-
+//em princípio não é preciso mexer
 /**
  * @author POO2016
  * 

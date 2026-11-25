@@ -7,7 +7,6 @@ public final class Hole extends Terrain {
         super(position, 10);
     }
 
-    /** Returns the sprite name. */
     @Override
     public String getName() {
         return "hole";

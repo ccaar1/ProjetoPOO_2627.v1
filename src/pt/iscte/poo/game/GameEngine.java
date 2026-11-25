@@ -1,6 +1,5 @@
 package pt.iscte.poo.game;
 
-import java.awt.event.KeyEvent;
 import java.io.File;
 
 import objects.Baba;
@@ -8,18 +7,18 @@ import pt.iscte.poo.gui.ImageGUI;
 import pt.iscte.poo.observer.Observed;
 import pt.iscte.poo.observer.Observer;
 import pt.iscte.poo.utils.Direction;
-import pt.iscte.poo.utils.Point2D;
 
 public class GameEngine implements Observer {
 
-    private static GameEngine INSTANCE = new GameEngine();
+    private static final GameEngine INSTANCE = new GameEngine();
     private static final String ROOMS_DIRECTORY = "rooms";
 
+    private final File roomFile = new File(ROOMS_DIRECTORY, "room0.txt");
     private Room currentRoom;
     private int lastTickProcessed = 0;
 
     private GameEngine() {
-        currentRoom = Room.readRoom(new File(ROOMS_DIRECTORY + "/room0.txt"));
+        currentRoom = Room.readRoom(roomFile);
         updateGUI(); //atualizar GUI e importante
     }
 
@@ -28,27 +27,30 @@ public class GameEngine implements Observer {
 	}
 
     @Override
-    public void update(Observed source) { //le as teclas e processa os ticks
+    public void update(Observed source) {
+        ImageGUI gui = ImageGUI.getInstance();
 
-        if (ImageGUI.getInstance().wasKeyPressed()) {
-            int k = ImageGUI.getInstance().keyPressed();
-
-            if (k == KeyEvent.VK_LEFT || k == KeyEvent.VK_RIGHT || k == KeyEvent.VK_UP || k == KeyEvent.VK_DOWN) {
-                Direction d = Direction.directionFor(k); 
-                Point2D nextPosition = getPlayer().getPosition().plus(d.asVector());
-
-                if (!currentRoom.isWall(nextPosition)) {
-                        getPlayer().move(d);
-                } 
+        if (gui.wasKeyPressed()) {
+            int key = gui.keyPressed();
+            if (Direction.isDirection(key) && !currentRoom.isWon()
+                    && currentRoom.tryMove(Direction.directionFor(key))) {
+                boolean restarted = currentRoom.hasRuleConflict();
+                if (restarted) {
+                    currentRoom = Room.readRoom(roomFile);
+                }
 
                 updateGUI();
+                if (restarted) {
+                    gui.setStatusMessage("Regras incompatíveis. " + statusMessage());
+                }
             }
         }
-        int t = ImageGUI.getInstance().getTicks();
-        while (lastTickProcessed < t) {
+
+        int tick = gui.getTicks();
+        while (lastTickProcessed < tick) {
             processTick();
         }
-        ImageGUI.getInstance().update();
+        gui.update();
     }
 
     private void processTick() {
@@ -59,9 +61,15 @@ public class GameEngine implements Observer {
         if (currentRoom != null) {
             ImageGUI.getInstance().clearImages();
             ImageGUI.getInstance().addImages(currentRoom.getObjects());
+            ImageGUI.getInstance().setStatusMessage(statusMessage());
         }
     }
 
+
+    private String statusMessage() {
+        String moves = "Movimentos: " + currentRoom.getMoves();
+        return currentRoom.isWon() ? "Nível concluído! " + moves : moves;
+    }
 
     public Baba getPlayer() {
         return currentRoom.getPlayer();

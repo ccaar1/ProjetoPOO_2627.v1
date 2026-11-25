@@ -11,12 +11,11 @@ import java.util.Set;
 
 import objects.*;
 
-import pt.iscte.poo.gui.ImageTile;
 import pt.iscte.poo.utils.*;
 
 public class Room {
 
-    private List<ImageTile> objects;
+    private List<GameObject> objects;
     private String roomName;
     private Baba player;
 
@@ -43,12 +42,12 @@ public class Room {
     }
 
     /** Adds an element to the room. */
-    public void addObject(ImageTile obj) {
+    public void addObject(GameObject obj) {
         objects.add(obj);
     }
 
-    /** Returns the elements used by the GUI. */
-    public List<ImageTile> getObjects() {
+    /** Returns a snapshot of the game objects. */
+    public List<GameObject> getObjects() {
         return List.copyOf(objects);
     }
 
@@ -71,10 +70,10 @@ public class Room {
     }
 
     /** Returns every element at a position, including the floor. */
-    public List<ImageTile> getObjectsAt(Point2D position) {
-        List<ImageTile> result = new ArrayList<>();
+    public List<GameObject> getObjectsAt(Point2D position) {
+        List<GameObject> result = new ArrayList<>();
 
-        for (ImageTile object : objects) {
+        for (GameObject object : objects) {
             if (object.getPosition().equals(position)) {
                 result.add(object);
             }
@@ -85,7 +84,7 @@ public class Room {
 
     /** Checks whether a wall occupies a position. */
     public boolean isWall(Point2D position) {
-        for (ImageTile object : getObjectsAt(position)) {
+        for (GameObject object : getObjectsAt(position)) {
             if (object instanceof Wall) {
                 return true;
             }
@@ -142,6 +141,10 @@ public class Room {
                     Point2D position = new Point2D(x, y);
 
                     r.addObject(new Dirt(position));
+
+                    if (element == 'g') {
+                        r.addObject(new Grass(position));
+                    }
 
                     if (element == 'X') {
                         r.addObject(new Wall(position));
@@ -203,7 +206,7 @@ public class Room {
                         );
                     }
 
-                    r.player = new Baba(position);
+                    r.player = new Baba(position, direction);
                     r.addObject(r.player);
 
                 } else {
@@ -283,7 +286,7 @@ public class Room {
     public void evaluateRules() {
         properties.clear();
 
-        for (ImageTile object : objects) {
+        for (GameObject object : objects) {
             if (object instanceof WordTile word
                     && word.getType() == WordType.BOX) {
 
@@ -317,7 +320,7 @@ public class Room {
 
     /** Checks for a specific word at a position. */
     private boolean hasWordAt(Point2D position, WordType type) {
-        for (ImageTile object : getObjectsAt(position)) {
+        for (GameObject object : getObjectsAt(position)) {
             if (object instanceof WordTile word
                     && word.getType() == type) {
                 return true;
@@ -370,7 +373,7 @@ public class Room {
             return false;
         }
 
-        for (ImageTile object : getObjectsAt(destination)) {
+        for (GameObject object : getObjectsAt(destination)) {
             if (object instanceof Pushable pushable
                     && pushable.canBePushed(this, direct)) {
 
@@ -406,7 +409,7 @@ public class Room {
 
     /** Checks the default objective and the BOX IS WIN objective. */
     public boolean isWon() {
-        for (ImageTile object : getObjectsAt(player.getPosition())) {
+        for (GameObject object : getObjectsAt(player.getPosition())) {
             if (object instanceof Flag) {
                 return true;
             }
